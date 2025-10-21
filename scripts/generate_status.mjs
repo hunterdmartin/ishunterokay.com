@@ -104,7 +104,7 @@ await writeCount(countData);
 console.log(`This is request #${countData.count} for ${countData.month}`);
 
 const resp = await openai.chat.completions.create({
-  model: "gpt-4o-mini",
+  model: "gpt-5-nano",
   temperature: 0.9,
   messages: [
     { role: "system", content: SYSTEM },
