@@ -1,8 +1,6 @@
 {
-  "ok": true,
+  "answer": "Yes",
   "message": "Hunter shipped a feature and touched grass.",
-  "updated_at": "2025-10-21T14:05:00-04:00",
-  "mood_color": "#2fffd3",
-  "metrics": { "stability": 84, "optimism": 88, "chaos": 12, "caffeine_cups": 1 },
+  "updated": "2025-10-21T12:05:00-04:00",
   "chips": ["Weather: sunny", "Spotify: Synthwave Flow", "Sleep: 7.2h"]
 }
