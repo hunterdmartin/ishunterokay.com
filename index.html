@@ -315,18 +315,17 @@
     }catch(e){ return null; }
   }
 
-  async function load(){
+async function load(){
     const [manual, rawSignals] = await Promise.all([
       fetchJSON('/status.json'),
       getSignals(),
     ]);
     const ai = await fetchAI(manual, rawSignals);
-
-    // Prefer AI if available, else merge manual + signals
     const base = ai || mergeSignals(manual, rawSignals);
     setUI(base);
+  }
 
-  // Reroll
+  // Button
   document.getElementById('reroll').addEventListener('click', load);
 
   // Admin local panel
@@ -340,7 +339,6 @@
     admin.classList.toggle('visible', show);
     if(!show) return;
 
-    // seed with current state (DEFAULT)
     ta.value = JSON.stringify(DEFAULT_STATUS, null, 2);
 
     apply.addEventListener('click', ()=>{
@@ -361,14 +359,25 @@
     });
   }
 
-  window.addEventListener('hashchange', initAdmin);
-
-  // Konami code => flips status to NOT OK for fun
+  // Konami code
   (function(){
     const seq = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
     let i = 0;
     window.addEventListener('keydown', (e)=>{
-      if(e.key === seq[i]){ i++; if(i===seq.length){ i=0; setUI({ ok:false, message:"Konami detected. Hunter is not okay (temporarily).", updated_at:new Date().toISOString(), mood_color:'#ff4d6d', metrics:{stability:12, optimism:24, chaos:88, caffeine_cups:5}, chips:["Cheat mode engaged"] }); }} else { i = 0; }
+      if(e.key === seq[i]){
+        i++;
+        if(i===seq.length){
+          i=0;
+          setUI({
+            ok:false,
+            message:"Konami detected. Hunter is not okay (temporarily).",
+            updated_at:new Date().toISOString(),
+            mood_color:'#ff4d6d',
+            metrics:{stability:12, optimism:24, chaos:88, caffeine_cups:5},
+            chips:["Cheat mode engaged"]
+          });
+        }
+      } else { i = 0; }
     });
   })();
 
