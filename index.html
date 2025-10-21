@@ -49,4 +49,194 @@
       filter: drop-shadow(0 0 24px rgba(0,209,255,.35)); color:#0b0b13; font-weight:800;}
     .subtitle{color:var(--muted); margin:0 0 22px 0; font-size:14px;}
     .answer{font-family: Orbitron, Inter, sans-serif; font-weight:800; font-size: clamp(36px, 7vw, 82px);
-      line-height:1; margin: 8px 0 12px 0; text-shadow: 0 0 10px rgba(
+      line-height:1; margin: 8px 0 12px 0; text-shadow: 0 0 10px rgba(0,209,255,.25);}
+    .answer.ok{color: var(--ok)} .answer.meh{color: var(--meh)} .answer.not{color: var(--not)}
+    .msg{font-size: clamp(16px, 2.2vw, 22px); color: var(--text); opacity:.95; margin: 6px 0 18px 0;}
+    .updated{color:var(--muted); font-size: 12px;}
+    .chips{display:flex; flex-wrap:wrap; gap:10px; margin: 18px 0 2px 0;}
+    .chip{border:1px solid rgba(255,255,255,.12); color: var(--muted); padding:8px 10px; border-radius:999px; font-size:13px;}
+    .grid2{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:14px; margin-top:18px;}
+    .panel{background: var(--panel); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:14px;}
+    .panel h3{font-family: Orbitron, Inter, sans-serif; font-size:12px; letter-spacing:.1em; text-transform:uppercase; margin:0 0 8px 0; color:var(--muted);}
+    .metric{font-size:28px; font-weight:800;}
+    .trend{font-size:12px; color:var(--muted);}
+    .footer{display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:14px; color: var(--muted); font-size:12px;}
+    .btn{border:1px solid rgba(255,255,255,.14); background: transparent; color: var(--text); border-radius:10px; padding:8px 12px; cursor:pointer;}
+    .btn:hover{border-color: rgba(255,255,255,.28);}
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="scanline"></div>
+  <main class="wrap">
+    <section class="card">
+      <h1 class="title"><span class="logo">H</span> Is Hunter Okay?</h1>
+      <p class="subtitle">A synthwave vibe-check powered by vibes, weather, caffeine, and manual overrides.</p>
+      <div id="answer" class="answer meh">Calculating vibes…</div>
+      <p id="message" class="msg">Hold tight while we ping the vibe satellites.</p>
+      <p id="updated" class="updated">Last updated: —</p>
+      <div class="chips" id="chips"></div>
+      <div class="grid2">
+        <div class="panel"><h3>Stability Index</h3><div class="metric" id="stability">—</div></div>
+        <div class="panel"><h3>Optimism</h3><div class="metric" id="optimism">—</div></div>
+        <div class="panel"><h3>Chaos</h3><div class="metric" id="chaos">—</div></div>
+        <div class="panel"><h3>Caffeine</h3><div class="metric" id="caffeine">—</div></div>
+      </div>
+      <div class="footer">
+        <span>Tip: add <code>#admin</code> to the URL for a quick local edit panel.</span>
+        <div><button class="btn" id="reroll">Re-check vibes</button></div>
+      </div>
+      <div id="admin" style="display:none;margin-top:16px;">
+        <div class="tip" style="font-size:12px;color:var(--muted);margin:6px 0 8px">
+          Paste or edit your manual status JSON here.
+        </div>
+        <textarea id="adminText" spellcheck="false"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn" id="applyLocal">Apply locally</button>
+          <button class="btn" id="downloadJson">Download status.json</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const els = {
+  answer: document.getElementById('answer'),
+  message: document.getElementById('message'),
+  updated: document.getElementById('updated'),
+  chips: document.getElementById('chips'),
+  stability: document.getElementById('stability'),
+  optimism: document.getElementById('optimism'),
+  chaos: document.getElementById('chaos'),
+  caffeine: document.getElementById('caffeine'),
+};
+
+const DEFAULT_STATUS = {
+  ok: "meh",
+  message: "Systems nominal-ish. Hunter is cautiously optimistic.",
+  updated_at: new Date().toISOString(),
+  mood_color: "#ffd23f",
+  metrics: { stability: 62, optimism: 71, chaos: 28, caffeine_cups: 2 },
+  chips: ["Weather: clear skies", "Spotify: hyperfocus mode", "Sleep: 6.5h"],
+};
+
+async function fetchJSON(url){
+  try{
+    const sep = url.includes('?') ? '&' : '?';
+    const res = await fetch(url + `${sep}t=${Date.now()}`, { cache: 'no-store' });
+    if(!res.ok) throw new Error(res.status + ' ' + url);
+    return await res.json();
+  }catch(e){ return null; }
+}
+
+function mergeSignals(manual, signals){
+  const base = manual || {};
+  const s = signals || {};
+  return {
+    ok: (base.ok ?? s.ok ?? "meh"),
+    message: (base.message ?? s.message ?? DEFAULT_STATUS.message),
+    updated_at: (base.updated_at ?? s.updated_at ?? new Date().toISOString()),
+    mood_color: (base.mood_color ?? s.mood_color ?? DEFAULT_STATUS.mood_color),
+    metrics: {
+      stability: (base.metrics?.stability ?? s.metrics?.stability ?? DEFAULT_STATUS.metrics.stability),
+      optimism: (base.metrics?.optimism ?? s.metrics?.optimism ?? DEFAULT_STATUS.metrics.optimism),
+      chaos: (base.metrics?.chaos ?? s.metrics?.chaos ?? DEFAULT_STATUS.metrics.chaos),
+      caffeine_cups: (base.metrics?.caffeine_cups ?? s.metrics?.caffeine_cups ?? DEFAULT_STATUS.metrics.caffeine_cups),
+    },
+    chips: (Array.isArray(base.chips) && base.chips.length ? base.chips : (s.chips ?? DEFAULT_STATUS.chips))
+  };
+}
+
+function classify(ok){
+  if(ok === true || ok === 'true' || ok === 'ok' || ok === 'yes') return 'ok';
+  if(ok === false || ok === 'false' || ok === 'no' || ok === 'not') return 'not';
+  return 'meh';
+}
+
+function setUI(state){
+  const cls = classify(state.ok);
+  els.answer.classList.remove('ok','meh','not');
+  els.answer.classList.add(cls);
+  els.answer.textContent = cls === 'ok' ? 'YES' : cls === 'not' ? 'NO' : 'KIND OF';
+  els.message.textContent = state.message || '';
+  els.updated.textContent = 'Last updated: ' + (new Date(state.updated_at)).toLocaleString();
+  const m = state.metrics || {};
+  els.stability.textContent = (m.stability ?? '—') + (isFinite(m.stability) ? '%' : '');
+  els.optimism.textContent = (m.optimism ?? '—') + (isFinite(m.optimism) ? '%' : '');
+  els.chaos.textContent = (m.chaos ?? '—') + (isFinite(m.chaos) ? '%' : '');
+  els.caffeine.textContent = (m.caffeine_cups ?? '—');
+  els.chips.innerHTML = '';
+  (state.chips || []).forEach(c=>{
+    const span=document.createElement('span');
+    span.className='chip'; span.textContent=c; els.chips.appendChild(span);
+  });
+  document.documentElement.style.setProperty('--meh', state.mood_color || '#ffd23f');
+}
+
+async function getSignals(){
+  const cfg = await fetchJSON('/config.json');
+  const chips = [];
+  const metrics = {};
+  try{
+    if(cfg?.weather?.enabled && typeof cfg.weather.lat === 'number'){
+      const { lat, lon } = cfg.weather;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
+      const w = await fetchJSON(url);
+      if(w?.current){
+        const t=Math.round(w.current.temperature_2m);
+        chips.push(`Weather: ${t}°`);
+        const stab=70-Math.max(0,Math.abs(t-68)-5);
+        metrics.stability=Math.max(20,Math.min(95,stab));
+      }
+    }
+  }catch(e){}
+  return { ok:'meh', mood_color:'#ffd23f', updated_at:new Date().toISOString(),
+    metrics:{ stability:metrics.stability??62, optimism:70, chaos:30, caffeine_cups:2 }, chips, _cfg:cfg||{} };
+}
+
+async function load(){
+  const [manual, rawSignals] = await Promise.all([
+    fetchJSON('/status.json'),
+    getSignals(),
+  ]);
+  const base = mergeSignals(manual, rawSignals);
+  setUI(base);
+}
+
+document.getElementById('reroll').addEventListener('click', load);
+
+function initAdmin(){
+  const admin=document.getElementById('admin');
+  const ta=document.getElementById('adminText');
+  const apply=document.getElementById('applyLocal');
+  const dl=document.getElementById('downloadJson');
+  const show=location.hash==='#admin';
+  admin.style.display=show?'block':'none';
+  if(!show) return;
+  ta.value=JSON.stringify(DEFAULT_STATUS,null,2);
+  apply.addEventListener('click',()=>{
+    try{const parsed=JSON.parse(ta.value);setUI(mergeSignals(parsed,{}));}
+    catch(e){alert('Invalid JSON: '+e.message);}
+  });
+  dl.addEventListener('click',()=>{
+    const blob=new Blob([ta.value],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='status.json'; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+}
+window.addEventListener('hashchange',initAdmin);
+
+(function(){
+  const seq=[\"ArrowUp\",\"ArrowUp\",\"ArrowDown\",\"ArrowDown\",\"ArrowLeft\",\"ArrowRight\",\"ArrowLeft\",\"ArrowRight\",\"b\",\"a\"];
+  let i=0;
+  window.addEventListener('keydown',(e)=>{
+    if(e.key===seq[i]){i++;if(i===seq.length){i=0;setUI({ok:false,message:\"Konami detected. Hunter is not okay (temporarily).\",updated_at:new Date().toISOString(),mood_color:'#ff4d6d',metrics:{stability:12,optimism:24,chaos:88,caffeine_cups:5},chips:[\"Cheat mode engaged\"]});}}
+    else{i=0;}
+  });
+})();
+initAdmin(); load();
+</script>
+</body>
+</html>
