@@ -148,7 +148,7 @@
   //  - Loads manual overrides from /status.json (static hosting friendly)
   //  - (Optional) blends with signals (weather, spotify) if configured
   //  - Provides local #admin panel to craft/export JSON for static hosts
-  //  - NEW: optional AI vibe synthesis via /api/ai-vibe (see chat for serverless code)
+  //  - Optional AI vibe synthesis via /api/ai-vibe
   // =============================================================
 
   const els = {
@@ -174,16 +174,6 @@
     chips: ["Weather: clear skies", "Spotify: hyperfocus mode", "Sleep: 6.5h"],
   };
 
-  // SAMPLE status.json to place at site root:
-  // {
-  //   "ok": true,
-  //   "message": "Hunter shipped a feature and touched grass.",
-  //   "updated_at": "2025-10-21T14:05:00-04:00",
-  //   "mood_color": "#2fffd3",
-  //   "metrics": { "stability": 84, "optimism": 88, "chaos": 12, "caffeine_cups": 1 },
-  //   "chips": ["Weather: sunny", "Spotify: Synthwave Flow", "Sleep: 7.2h"]
-  // }
-
   async function fetchJSON(url){
     try{
       const res = await fetch(url + `?t=${Date.now()}`, { cache: 'no-store' });
@@ -195,10 +185,9 @@
   }
 
   function mergeSignals(manual, signals){
-    // Blend manual with signals (prefer manual if present)
     const base = manual || {};
     const s = signals || {};
-    const merged = {
+    return {
       ok: (base.ok ?? s.ok ?? "meh"),
       message: (base.message ?? s.message ?? DEFAULT_STATUS.message),
       updated_at: (base.updated_at ?? s.updated_at ?? new Date().toISOString()),
@@ -211,7 +200,6 @@
       },
       chips: (Array.isArray(base.chips) && base.chips.length ? base.chips : (s.chips ?? DEFAULT_STATUS.chips))
     };
-    return merged;
   }
 
   function classify(ok){
@@ -230,37 +218,26 @@
     els.message.textContent = state.message || '';
     els.updated.textContent = 'Last updated: ' + (new Date(state.updated_at)).toLocaleString();
 
-    // Numbers
     const m = state.metrics || {};
     els.stability.textContent = (m.stability ?? '—') + (isFinite(m.stability) ? '%' : '');
     els.optimism.textContent = (m.optimism ?? '—') + (isFinite(m.optimism) ? '%' : '');
     els.chaos.textContent = (m.chaos ?? '—') + (isFinite(m.chaos) ? '%' : '');
     els.caffeine.textContent = (m.caffeine_cups ?? '—');
 
-    // Chips
     els.chips.innerHTML = '';
     (state.chips || []).forEach(c => {
       const span = document.createElement('span');
       span.className = 'chip'; span.textContent = c; els.chips.appendChild(span);
     });
 
-    // Accent glow by mood color
     document.documentElement.style.setProperty('--meh', state.mood_color || '#ffd23f');
   }
 
   async function getSignals(){
-    // Placeholder for optional dynamic inputs
-    // You can wire these up by providing a /config.json with API keys or toggles.
-    // {
-    //   "weather": { "enabled": true, "lat": 39.7392, "lon": -75.5398, "api": "open-meteo" },
-    //   "spotify": { "enabled": true, "nowPlayingEndpoint": "/api/now-playing" },
-    //   "ai": { "enabled": true }
-    // }
     const cfg = await fetchJSON('/config.json');
     const chips = [];
     const metrics = {};
 
-    // Example: lightweight weather via open-meteo (no key required)
     try{
       if(cfg?.weather?.enabled && typeof cfg.weather.lat === 'number'){
         const { lat, lon } = cfg.weather;
@@ -269,14 +246,12 @@
         if(w?.current){
           const t = Math.round(w.current.temperature_2m);
           chips.push(`Weather: ${t}°`);
-          // if too hot/cold, nudge stability
           const stab = 70 - Math.max(0, Math.abs(t-68) - 5);
           metrics.stability = Math.max(20, Math.min(95, stab));
         }
       }
     }catch(e){ /* ignore */ }
 
-    // Example: Spotify now playing
     try{
       if(cfg?.spotify?.enabled && cfg.spotify.nowPlayingEndpoint){
         const s = await fetchJSON(cfg.spotify.nowPlayingEndpoint);
@@ -302,7 +277,6 @@
   }
 
   async function fetchAI(manual, signals){
-    // Calls your serverless function /api/ai-vibe which should return the same shape as DEFAULT_STATUS
     try{
       if(!signals?._cfg?.ai?.enabled) return null;
       const res = await fetch('/api/ai-vibe', {
@@ -310,12 +284,11 @@
         body: JSON.stringify({ manual, signals })
       });
       if(!res.ok) throw new Error('AI endpoint error');
-      const data = await res.json();
-      return data;
+      return await res.json();
     }catch(e){ return null; }
   }
 
-async function load(){
+  async function load(){
     const [manual, rawSignals] = await Promise.all([
       fetchJSON('/status.json'),
       getSignals(),
@@ -325,7 +298,7 @@ async function load(){
     setUI(base);
   }
 
-  // Button
+  // Reroll
   document.getElementById('reroll').addEventListener('click', load);
 
   // Admin local panel
@@ -359,25 +332,14 @@ async function load(){
     });
   }
 
-  // Konami code
+  window.addEventListener('hashchange', initAdmin);
+
+  // Konami code => flips status to NOT OK for fun
   (function(){
     const seq = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
     let i = 0;
     window.addEventListener('keydown', (e)=>{
-      if(e.key === seq[i]){
-        i++;
-        if(i===seq.length){
-          i=0;
-          setUI({
-            ok:false,
-            message:"Konami detected. Hunter is not okay (temporarily).",
-            updated_at:new Date().toISOString(),
-            mood_color:'#ff4d6d',
-            metrics:{stability:12, optimism:24, chaos:88, caffeine_cups:5},
-            chips:["Cheat mode engaged"]
-          });
-        }
-      } else { i = 0; }
+      if(e.key === seq[i]){ i++; if(i===seq.length){ i=0; setUI({ ok:false, message:"Konami detected. Hunter is not okay (temporarily).", updated_at:new Date().toISOString(), mood_color:'#ff4d6d', metrics:{stability:12, optimism:24, chaos:88, caffeine_cups:5}, chips:["Cheat mode engaged"] }); }} else { i = 0; }
     });
   })();
 
