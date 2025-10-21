@@ -1,0 +1,11 @@
+{
+  "name": "ishunterokay",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo \"no build\""
+  },
+  "dependencies": {
+    "openai": "^4.57.0"
+  }
+}
