@@ -415,5 +415,46 @@
       })();
     })();
     </script>
+    <script>
+      // ---- tiny state pulled from your chips / defaults ----
+      const state = {
+        weather: (document.querySelector('[data-chip="weather"]')?.dataset.value || 'sunny'),
+        spotify: (document.querySelector('[data-chip="spotify"]')?.dataset.value || 'Synthwave'),
+        sleep:   (document.querySelector('[data-chip="sleep"]')?.dataset.value   || '7.2h')
+      };
+    
+      const els = {
+        bigAnswer: document.querySelector('#answer')    || document.querySelector('[data-answer]'),
+        line:      document.querySelector('#message')   || document.querySelector('[data-message]'),
+        updated:   document.querySelector('#updated')   || document.querySelector('[data-updated]'),
+        refresh:   document.querySelector('#refresh')   || document.querySelector('[data-refresh]')
+      };
+    
+      async function synthesizeVibe() {
+        try {
+          if (els.line) els.line.textContent = 'Thinking…';
+          const q = new URLSearchParams({
+            weather: state.weather,
+            spotify: state.spotify,
+            sleep: state.sleep
+          });
+          const res = await fetch(`/api/ai-vibe?${q.toString()}`);
+          const data = await res.json();
+          if (data?.ok && data?.content) {
+            if (els.line) els.line.textContent = data.content.trim();
+            if (els.updated) els.updated.textContent = 'Updated just now';
+          } else {
+            if (els.line) els.line.textContent = '—';
+          }
+        } catch (e) {
+          console.error(e);
+          if (els.line) els.line.textContent = 'Could not fetch vibe.';
+        }
+      }
+    
+      window.addEventListener('load', synthesizeVibe);
+      if (els.refresh) els.refresh.addEventListener('click', synthesizeVibe);
+    </script>
   </body>
   </html>
+
