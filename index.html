@@ -325,16 +325,6 @@
     // Prefer AI if available, else merge manual + signals
     const base = ai || mergeSignals(manual, rawSignals);
     setUI(base);
-  }
-
-  
-    const [manual, signals] = await Promise.all([
-      fetchJSON('/status.json'),
-      getSignals(),
-    ]);
-    const state = mergeSignals(manual, signals);
-    setUI(state);
-  }
 
   // Reroll
   document.getElementById('reroll').addEventListener('click', load);
