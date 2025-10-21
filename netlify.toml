@@ -1,12 +1,13 @@
 [build]
-  # No real build; we just want Netlify to install deps for functions.
-  command = "npm run build"
+  # If you have no frontend build step, leave this empty:
+  command = ""
   publish = "."
-  functions = "netlify/functions"
 
 [functions]
+  directory = "netlify/functions"
   node_bundler = "esbuild"
-  external_node_modules = ["openai"]
 
-[build.environment]
-  NODE_VERSION = "18"
+[[redirects]]
+  from = "/api/*"
+  to   = "/.netlify/functions/:splat"
+  status = 200
