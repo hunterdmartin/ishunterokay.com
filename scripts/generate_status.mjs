@@ -8,6 +8,29 @@ if (!OPENAI_API_KEY) {
   process.exit(1);
 }
 
+// === Request limit control ===
+const LIMIT = 100; // change to your monthly max
+const COUNTER_FILE = ".request_count.json";
+
+async function readCount() {
+  try {
+    const data = JSON.parse(await fs.readFile(COUNTER_FILE, "utf8"));
+    const nowMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    // Reset monthly
+    if (data.month !== nowMonth) {
+      return { month: nowMonth, count: 0 };
+    }
+    return data;
+  } catch {
+    const nowMonth = new Date().toISOString().slice(0, 7);
+    return { month: nowMonth, count: 0 };
+  }
+}
+
+async function writeCount(data) {
+  await fs.writeFile(COUNTER_FILE, JSON.stringify(data, null, 2), "utf8");
+}
+
 const LAT = process.env.LAT || "39.7392";
 const LON = process.env.LON || "-75.5398";
 
@@ -69,6 +92,16 @@ const prompt = {
   manual,
   signals: { metrics: signals.metrics, chips: signals.chips }
 };
+
+// --- check request count ---
+const countData = await readCount();
+if (countData.count >= LIMIT) {
+  console.log(`Limit of ${LIMIT} requests reached for ${countData.month}. Skipping OpenAI call.`);
+  process.exit(0); // Exit early, don't call API
+}
+countData.count += 1;
+await writeCount(countData);
+console.log(`This is request #${countData.count} for ${countData.month}`);
 
 const resp = await openai.chat.completions.create({
   model: "gpt-4o-mini",
