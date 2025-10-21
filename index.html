@@ -398,7 +398,22 @@
 
     // Smoothly keep "Updated…" relative
     setInterval(() => { els.updatedEl.textContent = fmtWhen(state.updated); }, 30000);
-  })();
-  </script>
-</body>
-</html>
+    (async () => {
+        try {
+          // Example static parameters — you can later wire these to real signals
+          const res = await fetch(
+            '/.netlify/functions/ai-vibe?weather=sunny&spotify=Synthwave&sleep=7.2h',
+            { cache: 'no-store' }
+          );
+          const data = await res.json();
+          if (data.vibe) {
+            document.getElementById('message').textContent = data.vibe;
+          }
+        } catch (err) {
+          console.debug('AI vibe fetch failed, using fallback.', err);
+        }
+      })();
+    })();
+    </script>
+  </body>
+  </html>
