@@ -1,0 +1,5 @@
+{
+  "ai": { "enabled": false },
+  "weather": { "enabled": true, "lat": 39.7392, "lon": -75.5398 },
+  "spotify": { "enabled": false }
+}
