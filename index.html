@@ -14,6 +14,11 @@
   <path d="M20 34l7 7 17-18" fill="none" stroke="%233ad29f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>' />
 
+  <!-- Social preview -->
+  <meta property="og:title" content="Is Hunter Okay?">
+  <meta property="og:description" content="A synthwave vibe-check powered by vibes, weather, and caffeine.">
+  <meta property="og:type" content="website">
+
   <style>
     :root{
       --bg:#0b0b10;
@@ -21,7 +26,7 @@
       --ink:#e8e8ff;
       --muted:#a6a6c9;
       --accent:#7c5cff;
-      --good:#3ad29f;  /* mint like your screenshot */
+      --good:#3ad29f;  /* mint */
       --warn:#ffcf5c;
       --bad:#ff6b6b;
       --chip:#10101a;
@@ -42,12 +47,22 @@
     }
     .wrap{width:min(980px,100%)}
     .card{
+      position:relative;
       background:var(--card);
       border:1px solid var(--border);
       border-radius:24px;
       padding:32px;
       box-shadow:0 24px 80px rgba(0,0,0,.38);
     }
+    /* Soft aurora glow */
+    .card::before{
+      content:""; position:absolute; inset:-40px; z-index:-1;
+      background:
+        radial-gradient(600px 260px at 15% 0%,rgba(124,92,255,.18),transparent 60%),
+        radial-gradient(420px 220px at 85% 20%,rgba(58,210,159,.14),transparent 60%);
+      filter: blur(20px);
+    }
+
     header{
       display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:10px;
     }
@@ -70,6 +85,16 @@
     .answer.warn{ color: var(--warn); }
     .answer.bad{ color: var(--bad); }
 
+    /* Animated gradient headline when OK */
+    .answer.ok.gradient{
+      background: linear-gradient(90deg, var(--good), var(--accent), var(--good));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      background-size:200% 100%;
+      animation: shine 6s linear infinite;
+      text-shadow:none; /* gradient text looks cleaner without shadow */
+    }
+    @keyframes shine { 0%{background-position:0 0} 100%{background-position:200% 0} }
+
     .message{
       font-size: clamp(18px, 2.4vw, 24px);
       color: var(--ink);
@@ -80,6 +105,10 @@
       display:flex; gap:12px; flex-wrap:wrap; align-items:center; color:var(--muted);
       font-size:14px; margin:6px 0 14px;
     }
+    /* quick pulse for "Updated..." */
+    .pulse { animation:pulse 2s ease-out 1; }
+    @keyframes pulse { 0%{opacity:.4} 100%{opacity:1} }
+
     .chips{
       display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;
     }
@@ -91,6 +120,7 @@
       font-size:14px;
       color:#cfd0ff;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+      white-space:nowrap;
     }
 
     /* Admin panel (hidden by default) */
@@ -123,12 +153,10 @@
       </header>
 
       <div id="status">
-        <div id="answer" class="answer ok">Yes</div>
+        <div id="answer" class="answer ok gradient">Yes</div>
         <div id="message" class="message">Hunter shipped a feature and touched grass.</div>
         <div class="meta"><span id="updated">Updated just now</span></div>
-        <div id="chips" class="chips">
-          <!-- pills populate here -->
-        </div>
+        <div id="chips" class="chips"></div>
       </div>
 
       <div class="admin" id="adminPanel" aria-hidden="true">
@@ -195,9 +223,19 @@
       exportBox: document.getElementById("exportBox")
     };
 
+    // Fun quips when no status.json is found
+    const QUIPS = [
+      "Touching grass 🌿",
+      "Refactoring feelings",
+      "Shipping pixels",
+      "Wrangling DAX",
+      "Hydrating and debugging",
+      "Consulting with the vibe committee"
+    ];
+
     const defaults = {
       answer: "Yes",
-      message: "Hunter shipped a feature and touched grass.",
+      message: QUIPS[Math.floor(Math.random()*QUIPS.length)],
       updated: new Date().toISOString(),
       chips: ["Weather: sunny","Spotify: Synthwave Flow","Sleep: 7.2h"]
     };
@@ -220,22 +258,45 @@
       if (diff < 86400) { const h = Math.floor(diff/3600); return `Updated ${h} hour${h===1?"":"s"} ago`; }
       return "Updated " + d.toLocaleString();
     }
+    function iconFor(text){
+      const t = String(text).toLowerCase();
+      if (t.includes("weather")) return "☀️ ";
+      if (t.includes("spotify") || t.includes("music")) return "🎧 ";
+      if (t.includes("sleep")) return "😴 ";
+      if (t.includes("coffee") || t.includes("caffeine")) return "☕ ";
+      return "• ";
+    }
 
     function render(data) {
       const { answer, message, updated, chips } = data;
-      els.answerEl.textContent = answer || "Unknown";
-      els.answerEl.className = "answer " + clsForAnswer(answer);
-      els.messageEl.textContent = message || "";
-      els.updatedEl.textContent = fmtWhen(updated);
 
+      // Answer
+      const statusCls = clsForAnswer(answer);
+      els.answerEl.textContent = answer || "Unknown";
+      els.answerEl.className = "answer " + statusCls + (statusCls === "ok" ? " gradient" : "");
+
+      // Message
+      els.messageEl.textContent = message || "";
+
+      // Updated
+      els.updatedEl.textContent = fmtWhen(updated);
+      els.updatedEl.classList.remove("pulse");
+      // trigger a quick pulse each render (esp. after refresh/apply)
+      requestAnimationFrame(()=> {
+        els.updatedEl.classList.add("pulse");
+        setTimeout(()=>els.updatedEl.classList.remove("pulse"), 2000);
+      });
+
+      // Chips
       els.chipsEl.innerHTML = "";
       (Array.isArray(chips) ? chips : []).forEach(text => {
         const s = document.createElement("span");
         s.className = "chip";
-        s.textContent = String(text);
+        s.textContent = iconFor(text) + String(text);
         els.chipsEl.appendChild(s);
       });
 
+      // Sync admin inputs
       els.answerInput.value = answer || "";
       els.messageInput.value = message || "";
       const dt = new Date(updated || Date.now());
@@ -273,7 +334,7 @@
     function collectFromAdmin() {
       const a = els.answerInput.value.trim() || "Yes";
       const m = els.messageInput.value.trim();
-      const uRaw = els.updatedInput.value;
+      const uRaw = els.updatedInput.value; // datetime-local
       const u = uRaw ? new Date(uRaw) : new Date();
       const chips = [];
       els.chipsEditor.querySelectorAll('input[type="text"]').forEach(inp => {
@@ -281,14 +342,14 @@
       });
       return {
         answer: a,
-        message: m,
+        message: m || QUIPS[Math.floor(Math.random()*QUIPS.length)],
         updated: isNaN(u.getTime()) ? new Date().toISOString() : u.toISOString(),
         chips
       };
     }
 
     // Admin wiring
-    document.getElementById("adminToggleBtn").addEventListener("click", () => {
+    els.adminToggleBtn.addEventListener("click", () => {
       const p = els.adminPanel;
       const open = !p.classList.contains("open");
       p.classList.toggle("open", open);
@@ -328,10 +389,14 @@
         render(state);
       }
     }
+
+    // Refresh button
     els.refreshBtn.addEventListener("click", loadStatusJson);
 
-    // boot
+    // Boot
     loadStatusJson();
+
+    // Smoothly keep "Updated…" relative
     setInterval(() => { els.updatedEl.textContent = fmtWhen(state.updated); }, 30000);
   })();
   </script>
