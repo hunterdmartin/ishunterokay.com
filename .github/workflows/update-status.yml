@@ -1,0 +1,43 @@
+name: Update Hunter Status
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 */3 * * *"  # every 3 hours; tweak as you like
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # allow committing status.json back
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm i openai@4
+
+      - name: Generate status.json with OpenAI
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LAT: "39.7392"
+          LON: "-75.5398"
+        run: |
+          node scripts/generate_status.mjs
+
+      - name: Commit & push
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add status.json
+            git commit -m "chore: auto-update status.json"
+            git push
+          else
+            echo "No changes to commit."
+          fi
