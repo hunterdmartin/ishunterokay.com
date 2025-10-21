@@ -66,8 +66,13 @@
     header{
       display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:10px;
     }
+    /* Make the header question big & bold */
     header h1{
-      margin:0; font-size:16px; font-weight:600; color:var(--muted); letter-spacing:.25px;
+      margin:0;
+      font-size: clamp(28px, 3.5vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color:#ffffff;
     }
     .actions{display:flex; gap:8px; align-items:center}
     button{
@@ -91,7 +96,7 @@
       -webkit-background-clip:text; background-clip:text; color:transparent;
       background-size:200% 100%;
       animation: shine 6s linear infinite;
-      text-shadow:none; /* gradient text looks cleaner without shadow */
+      text-shadow:none;
     }
     @keyframes shine { 0%{background-position:0 0} 100%{background-position:200% 0} }
 
@@ -105,7 +110,6 @@
       display:flex; gap:12px; flex-wrap:wrap; align-items:center; color:var(--muted);
       font-size:14px; margin:6px 0 14px;
     }
-    /* quick pulse for "Updated..." */
     .pulse { animation:pulse 2s ease-out 1; }
     @keyframes pulse { 0%{opacity:.4} 100%{opacity:1} }
 
@@ -145,7 +149,7 @@
   <div class="wrap">
     <div class="card">
       <header>
-        <h1>ishunterokay.com</h1>
+        <h1>Is Hunter Okay?</h1>
         <div class="actions">
           <button id="refreshBtn" title="Reload status.json">↻ Refresh</button>
           <button id="adminToggleBtn" title="Open local editor">⚙️ Admin</button>
@@ -154,7 +158,7 @@
 
       <div id="status">
         <div id="answer" class="answer ok gradient">Yes</div>
-        <div id="message" class="message">Hunter shipped a feature and touched grass.</div>
+        <div id="message" class="message">Checking on that now…</div>
         <div class="meta"><span id="updated">Updated just now</span></div>
         <div id="chips" class="chips"></div>
       </div>
@@ -223,7 +227,7 @@
       exportBox: document.getElementById("exportBox")
     };
 
-    // Fun quips when no status.json is found
+    // (kept for variety if you want to use it later)
     const QUIPS = [
       "Touching grass 🌿",
       "Refactoring feelings",
@@ -235,7 +239,7 @@
 
     const defaults = {
       answer: "Yes",
-      message: QUIPS[Math.floor(Math.random()*QUIPS.length)],
+      message: "Checking on that now…",
       updated: new Date().toISOString(),
       chips: ["Weather: sunny","Spotify: Synthwave Flow","Sleep: 7.2h"]
     };
@@ -281,7 +285,6 @@
       // Updated
       els.updatedEl.textContent = fmtWhen(updated);
       els.updatedEl.classList.remove("pulse");
-      // trigger a quick pulse each render (esp. after refresh/apply)
       requestAnimationFrame(()=> {
         els.updatedEl.classList.add("pulse");
         setTimeout(()=>els.updatedEl.classList.remove("pulse"), 2000);
@@ -342,7 +345,7 @@
       });
       return {
         answer: a,
-        message: m || QUIPS[Math.floor(Math.random()*QUIPS.length)],
+        message: m || "Checking on that now…",
         updated: isNaN(u.getTime()) ? new Date().toISOString() : u.toISOString(),
         chips
       };
@@ -400,7 +403,6 @@
     setInterval(() => { els.updatedEl.textContent = fmtWhen(state.updated); }, 30000);
     (async () => {
         try {
-          // Example static parameters — you can later wire these to real signals
           const res = await fetch(
             '/.netlify/functions/ai-vibe?weather=sunny&spotify=Synthwave&sleep=7.2h',
             { cache: 'no-store' }
@@ -415,8 +417,9 @@
       })();
     })();
     </script>
+
+    <!-- Secondary script that kicks off AI vibe; keep the same but use the new placeholder -->
     <script>
-      // ---- tiny state pulled from your chips / defaults ----
       const state = {
         weather: (document.querySelector('[data-chip="weather"]')?.dataset.value || 'sunny'),
         spotify: (document.querySelector('[data-chip="spotify"]')?.dataset.value || 'Synthwave'),
@@ -432,7 +435,7 @@
     
       async function synthesizeVibe() {
         try {
-          if (els.line) els.line.textContent = 'Thinking…';
+          if (els.line) els.line.textContent = 'Checking on that now…';
           const q = new URLSearchParams({
             weather: state.weather,
             spotify: state.spotify,
@@ -457,4 +460,3 @@
     </script>
   </body>
   </html>
-
