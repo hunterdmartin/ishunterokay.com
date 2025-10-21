@@ -1,318 +1,414 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Is Hunter Okay?</title>
-  <meta name="description" content="A delightfully dramatic vibe check: Is Hunter okay?" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <!-- Inline favicon to avoid /favicon.ico 404 -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f1021'/%3E%3Ctext x='32' y='42' font-size='36' text-anchor='middle' fill='%232fffd3' font-family='Arial'%3EH%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="ishunterokay.com — a very serious status page." />
   <style>
     :root{
-      --bg:#0b0b13;
-      --panel:#0f1021;
-      --text:#e9e9ff;
-      --muted:#a7a7c7;
-      --ok:#2fffd3;
-      --meh:#ffd23f;
-      --not:#ff4d6d;
-      --accent1:#7b2fff;
-      --accent2:#00d1ff;
-      --grid:#1a1a2e;
-      --glow:0 0 24px rgba(123,47,255,.45),0 0 64px rgba(0,209,255,.25);
+      --bg:#0b0b10;
+      --card:#141420;
+      --ink:#e8e8ff;
+      --muted:#a6a6c9;
+      --accent:#7c5cff;
+      --good:#3ad29f;
+      --warn:#ffcf5c;
+      --bad:#ff6b6b;
+      --chip:#1c1c2c;
+      --border:#26263a;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
-      background:
-        radial-gradient(1200px 800px at 30% -10%, rgba(123,47,255,.35), transparent 60%),
-        radial-gradient(1000px 600px at 90% 10%, rgba(0,209,255,.25), transparent 60%),
-        var(--bg);
-      color:var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,Segoe UI Emoji;
+      color:var(--ink);
+      background:radial-gradient(1200px 800px at 20% -10%, #1a1a2e 0%, transparent 60%),
+                 radial-gradient(900px 600px at 120% 10%, #221a36 0%, transparent 60%),
+                 var(--bg);
       display:flex; align-items:center; justify-content:center; padding:24px;
-      overflow:hidden;
     }
-    .grid{
-      position:fixed; inset:0; pointer-events:none; opacity:.55;
-      background:
-        linear-gradient(to top, transparent 0%, rgba(255,255,255,.05) 1px, transparent 2px) 0 0/100% 40px,
-        linear-gradient(to right, transparent 0%, rgba(255,255,255,.05) 1px, transparent 2px) 0 0/40px 100%;
-      mask-image: linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,.9) 30%, rgba(0,0,0,1) 55%);
-      transform: perspective(600px) rotateX(65deg) translateY(26vh);
+    .wrap{
+      width:min(900px,100%);
     }
-    .scanline{ position:fixed; inset:0; pointer-events:none;
-      background: repeating-linear-gradient(to bottom, rgba(255,255,255,.02) 0 2px, transparent 2px 4px);
-      mix-blend-mode: overlay;
-    }
-    .wrap{ width:min(980px, 100%); position:relative; z-index:1; }
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:20px; padding:28px; box-shadow: var(--glow);
-      backdrop-filter: blur(6px);
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:28px;
+      box-shadow:0 20px 60px rgba(0,0,0,.35);
     }
-    .title{
-      font-family: Orbitron, Inter, sans-serif; letter-spacing:.02em; text-transform:uppercase;
-      display:flex; align-items:center; gap:12px; margin:0 0 6px 0;
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:8px;
     }
-    .title .logo{
-      display:inline-grid; place-items:center; width:38px; height:38px; border-radius:10px;
-      background: conic-gradient(from 0deg, var(--accent1), var(--accent2), var(--accent1));
-      filter: drop-shadow(0 0 24px rgba(0,209,255,.35));
-      color:#0b0b13; font-weight:800;
+    header h1{
+      margin:0; font-size:18px; font-weight:600; color:var(--muted);
+      letter-spacing:.3px;
     }
-    .subtitle{ color:var(--muted); margin:0 0 22px 0; font-size:14px }
+    header .actions{
+      display:flex; gap:8px; align-items:center;
+    }
+    button, .btn{
+      appearance:none; border:1px solid var(--border); background:#18182a; color:var(--ink);
+      padding:8px 12px; border-radius:12px; cursor:pointer; font-size:14px;
+    }
+    button:hover{border-color:#343456}
     .answer{
-      font-family: Orbitron, Inter, sans-serif; font-weight:800; font-size: clamp(36px, 7vw, 82px);
-      line-height:1; margin: 8px 0 12px 0; text-shadow: 0 0 10px rgba(0,209,255,.25);
+      font-size: clamp(48px, 8vw, 120px);
+      line-height:1.0; font-weight:800; letter-spacing:-.02em; margin:8px 0 4px;
+      text-shadow:0 2px 0 rgba(0,0,0,.15);
     }
-    .answer.ok{ color: var(--ok) }
-    .answer.meh{ color: var(--meh) }
-    .answer.not{ color: var(--not) }
-    .msg{ font-size: clamp(16px, 2.2vw, 22px); color: var(--text); opacity:.95; margin: 6px 0 18px 0 }
-    .updated{ color:var(--muted); font-size: 12px }
-    .chips{ display:flex; flex-wrap:wrap; gap:10px; margin: 18px 0 2px 0 }
-    .chip{ border:1px solid rgba(255,255,255,.12); color: var(--muted); padding:8px 10px; border-radius:999px; font-size:13px }
-    .grid2{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:14px; margin-top:18px }
-    .panel{ background: var(--panel); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:14px }
-    .panel h3{ font-family: Orbitron, Inter, sans-serif; font-size:12px; letter-spacing:.1em; text-transform:uppercase; margin:0 0 8px 0; color:var(--muted) }
-    .metric{ font-size:28px; font-weight:800 }
-    .footer{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:14px; color: var(--muted); font-size:12px }
-    .btn{ border:1px solid rgba(255,255,255,.14); background: transparent; color: var(--text); border-radius:10px; padding:8px 12px; cursor:pointer }
-    .btn:hover{ border-color: rgba(255,255,255,.28) }
-    textarea{ width:100%; min-height:160px; background:#0a0b16; color:var(--text); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:12px; font-family: ui-monospace, Menlo, Consolas, "Courier New", monospace; font-size:12px }
-    @media (max-width:420px){ .title .logo{ display:none } }
+    .answer.ok { color: var(--good); }
+    .answer.warn { color: var(--warn); }
+    .answer.bad { color: var(--bad); }
+    .message{
+      font-size: clamp(16px, 2.6vw, 22px);
+      color: var(--ink);
+      opacity:.95;
+      margin: 6px 0 14px;
+    }
+    .meta{
+      display:flex; gap:12px; flex-wrap:wrap; align-items:center; color:var(--muted);
+      font-size:14px; margin:6px 0 14px;
+    }
+    .chips{
+      display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;
+    }
+    .chip{
+      background:var(--chip);
+      border:1px solid var(--border);
+      padding:6px 10px; border-radius:999px; font-size:13px; color:#cfd0ff;
+    }
+    .footer-note{
+      margin-top:10px; color:var(--muted); font-size:12px;
+    }
+    /* Admin panel */
+    .admin{
+      margin-top:18px; display:none;
+    }
+    .admin.open{display:block;}
+    .grid{
+      display:grid; gap:12px; grid-template-columns: 1fr;
+    }
+    .row{display:grid; gap:8px;}
+    label{font-size:13px; color:var(--muted)}
+    input[type="text"], input[type="datetime-local"], textarea{
+      width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--border);
+      background:#0f0f1a; color:var(--ink); font-size:14px;
+    }
+    .inline{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .chips-edit{display:flex; gap:8px; flex-wrap:wrap}
+    .chips-edit input{width:auto}
+    .export{
+      width:100%; min-height:120px; font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    }
+    .hr{height:1px; background:var(--border); margin:16px 0}
+    a.link{color:#b7a6ff; text-decoration:none}
+    a.link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
-  <div class="grid" aria-hidden="true"></div>
-  <div class="scanline" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>ishunterokay.com</h1>
+        <div class="actions">
+          <button id="refreshBtn" title="Reload status.json">↻ Refresh</button>
+          <button id="adminToggleBtn" title="Open local editor">⚙️ Admin</button>
+        </div>
+      </header>
 
-  <main class="wrap">
-    <section class="card" role="region" aria-label="Hunter status">
-      <h1 class="title"><span class="logo">H</span> Is Hunter Okay?</h1>
-      <p class="subtitle">A synthwave vibe-check powered by vibes, weather, caffeine, and manual overrides.</p>
-
-      <div id="answer" class="answer meh" aria-live="polite">Calculating vibes…</div>
-      <p id="message" class="msg">Hold tight while we ping the vibe satellites.</p>
-      <p id="updated" class="updated">Last updated: —</p>
-
-      <div class="chips" id="chips" aria-label="Quick facts"></div>
-
-      <div class="grid2">
-        <div class="panel"><h3>Stability Index</h3><div class="metric" id="stability">—</div></div>
-        <div class="panel"><h3>Optimism</h3><div class="metric" id="optimism">—</div></div>
-        <div class="panel"><h3>Chaos</h3><div class="metric" id="chaos">—</div></div>
-        <div class="panel"><h3>Caffeine</h3><div class="metric" id="caffeine">—</div></div>
+      <div id="status">
+        <div id="answer" class="answer ok">Probably 🙂</div>
+        <div id="message" class="message">Using defaults. Drop a <code>/status.json</code> to override.</div>
+        <div class="meta">
+          <span id="updated">Updated just now</span>
+        </div>
+        <div id="chips" class="chips"></div>
       </div>
 
-      <div class="footer">
-        <span>Tip: add <code>#admin</code> to the URL for a quick local edit panel.</span>
-        <div><button class="btn" id="reroll">Re-check vibes</button></div>
-      </div>
-
-      <div id="admin" style="display:none; margin-top:16px">
-        <div class="tip">Paste or edit your manual status JSON here. Download and upload to your site root.</div>
-        <textarea id="adminText" spellcheck="false" aria-label="Manual status JSON"></textarea>
-        <div style="display:flex; gap:8px; margin-top:8px">
-          <button class="btn" id="applyLocal">Apply locally</button>
-          <button class="btn" id="downloadJson">Download status.json</button>
+      <div class="admin" id="adminPanel" aria-hidden="true">
+        <div class="hr"></div>
+        <div class="grid">
+          <div class="row">
+            <label for="answerInput">Answer (e.g., "Yes", "No", "Kinda")</label>
+            <input id="answerInput" type="text" placeholder="Yes" />
+          </div>
+          <div class="row">
+            <label for="messageInput">Message</label>
+            <textarea id="messageInput" rows="3" placeholder="Sipping coffee, plotting charts."></textarea>
+          </div>
+          <div class="row">
+            <label for="updatedInput">Updated (ISO or pick a time)</label>
+            <input id="updatedInput" type="datetime-local" />
+          </div>
+          <div class="row">
+            <label>Chips (tags)</label>
+            <div class="chips-edit" id="chipsEditor">
+              <!-- dynamic chip inputs -->
+            </div>
+            <div class="inline">
+              <button id="addChipBtn" type="button">+ Add tag</button>
+              <button id="clearChipsBtn" type="button">Clear tags</button>
+            </div>
+          </div>
+          <div class="row inline">
+            <button id="applyBtn" type="button">Apply locally</button>
+            <button id="makeJsonBtn" type="button">Generate status.json</button>
+            <button id="copyJsonBtn" type="button">Copy to clipboard</button>
+          </div>
+          <div class="row">
+            <label for="exportBox">status.json (save this next to index.html)</label>
+            <textarea id="exportBox" class="export" readonly></textarea>
+          </div>
+          <div class="footer-note">
+            Tip: Save the JSON above as <code>/status.json</code> in your static host. The page will auto-load it at runtime.
+          </div>
         </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <script>
-    // ------- Elements & defaults -------
+  // =============================================================
+  // ishunterokay.com — Client logic (static-site friendly)
+  // - Loads /status.json if present
+  // - Provides local Admin to craft/export JSON
+  // - Zero external deps; robust against errors
+  // =============================================================
+  (function () {
+    "use strict";
+
+    // -------- DOM refs
     const els = {
-      answer: document.getElementById('answer'),
-      message: document.getElementById('message'),
-      updated: document.getElementById('updated'),
-      chips: document.getElementById('chips'),
-      stability: document.getElementById('stability'),
-      optimism: document.getElementById('optimism'),
-      chaos: document.getElementById('chaos'),
-      caffeine: document.getElementById('caffeine'),
+      answerEl: document.getElementById("answer"),
+      messageEl: document.getElementById("message"),
+      updatedEl: document.getElementById("updated"),
+      chipsEl: document.getElementById("chips"),
+      refreshBtn: document.getElementById("refreshBtn"),
+      adminToggleBtn: document.getElementById("adminToggleBtn"),
+      adminPanel: document.getElementById("adminPanel"),
+      // Admin inputs
+      answerInput: document.getElementById("answerInput"),
+      messageInput: document.getElementById("messageInput"),
+      updatedInput: document.getElementById("updatedInput"),
+      chipsEditor: document.getElementById("chipsEditor"),
+      addChipBtn: document.getElementById("addChipBtn"),
+      clearChipsBtn: document.getElementById("clearChipsBtn"),
+      applyBtn: document.getElementById("applyBtn"),
+      makeJsonBtn: document.getElementById("makeJsonBtn"),
+      copyJsonBtn: document.getElementById("copyJsonBtn"),
+      exportBox: document.getElementById("exportBox")
     };
 
-    const DEFAULT_STATUS = {
-      ok: "meh",
-      message: "Systems nominal-ish. Hunter is cautiously optimistic.",
-      updated_at: new Date().toISOString(),
-      mood_color: "#ffd23f",
-      metrics: { stability: 62, optimism: 71, chaos: 28, caffeine_cups: 2 },
-      chips: ["Weather: clear skies", "Spotify: hyperfocus mode", "Sleep: 6.5h"],
+    // -------- Defaults (used if /status.json missing or broken)
+    const defaults = {
+      answer: "Yes",
+      message: "Alive, caffeinated, and probably over-engineering a dashboard.",
+      updated: new Date().toISOString(),
+      chips: ["Caffeinated", "Breathing", "Shipping soon™"]
     };
 
-    // ------- Utils -------
-    async function fetchJSON(url){
-      try{
-        const sep = url.includes('?') ? '&' : '?';
-        const res = await fetch(url + `${sep}t=${Date.now()}`, { cache: 'no-store' });
-        if(!res.ok) throw new Error(res.status + ' ' + url);
-        return await res.json();
-      }catch(e){ return null; }
+    // -------- Current state (mutable)
+    let state = { ...defaults };
+
+    // -------- Utilities
+    function clsForAnswer(a) {
+      const s = String(a || "").toLowerCase();
+      if (["yes", "y", "sure", "yep", "ok", "okay", "probably"].some(t => s.startsWith(t))) return "ok";
+      if (["kinda", "maybe", "unsure", "meh"].some(t => s.includes(t))) return "warn";
+      if (["no", "n", "nope"].some(t => s.startsWith(t))) return "bad";
+      return "ok";
     }
 
-    function mergeSignals(manual, signals){
-      const base = manual || {};
-      const s = signals || {};
-      return {
-        ok: (base.ok ?? s.ok ?? "meh"),
-        message: (base.message ?? s.message ?? DEFAULT_STATUS.message),
-        updated_at: (base.updated_at ?? s.updated_at ?? new Date().toISOString()),
-        mood_color: (base.mood_color ?? s.mood_color ?? DEFAULT_STATUS.mood_color),
-        metrics: {
-          stability: (base.metrics?.stability ?? s.metrics?.stability ?? DEFAULT_STATUS.metrics.stability),
-          optimism: (base.metrics?.optimism ?? s.metrics?.optimism ?? DEFAULT_STATUS.metrics.optimism),
-          chaos: (base.metrics?.chaos ?? s.metrics?.chaos ?? DEFAULT_STATUS.metrics.chaos),
-          caffeine_cups: (base.metrics?.caffeine_cups ?? s.metrics?.caffeine_cups ?? DEFAULT_STATUS.metrics.caffeine_cups),
-        },
-        chips: (Array.isArray(base.chips) && base.chips.length ? base.chips : (s.chips ?? DEFAULT_STATUS.chips))
-      };
+    function fmtWhen(iso) {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "Updated: unknown";
+      const now = Date.now();
+      const diff = Math.max(0, Math.floor((now - d.getTime()) / 1000));
+      if (diff < 60) return "Updated just now";
+      if (diff < 3600) {
+        const m = Math.floor(diff / 60);
+        return `Updated ${m} minute${m===1?"":"s"} ago`;
+      }
+      if (diff < 86400) {
+        const h = Math.floor(diff / 3600);
+        return `Updated ${h} hour${h===1?"":"s"} ago`;
+      }
+      // Fall back to a date/time
+      return "Updated " + d.toLocaleString();
     }
 
-    function classify(ok){
-      if(ok === true || ok === 'true' || ok === 'ok' || ok === 'yes') return 'ok';
-      if(ok === false || ok === 'false' || ok === 'no' || ok === 'not') return 'not';
-      return 'meh';
-    }
+    function render(data) {
+      const { answer, message, updated, chips } = data;
 
-    function setUI(state){
-      const cls = classify(state.ok);
-      els.answer.classList.remove('ok','meh','not');
-      els.answer.classList.add(cls);
-      els.answer.textContent = cls === 'ok' ? 'YES' : cls === 'not' ? 'NO' : 'KIND OF';
-      els.message.textContent = state.message || '';
-      els.updated.textContent = 'Last updated: ' + (new Date(state.updated_at)).toLocaleString();
+      // Answer text & color
+      els.answerEl.textContent = answer || "Unknown";
+      els.answerEl.classList.remove("ok","warn","bad");
+      els.answerEl.classList.add(clsForAnswer(answer));
 
-      const m = state.metrics || {};
-      els.stability.textContent = (m.stability ?? '—') + (isFinite(m.stability) ? '%' : '');
-      els.optimism.textContent = (m.optimism ?? '—') + (isFinite(m.optimism) ? '%' : '');
-      els.chaos.textContent = (m.chaos ?? '—') + (isFinite(m.chaos) ? '%' : '');
-      els.caffeine.textContent = (m.caffeine_cups ?? '—');
+      // Message
+      els.messageEl.textContent = message || "";
 
-      els.chips.innerHTML = '';
-      (state.chips || []).forEach(c => {
-        const span = document.createElement('span');
-        span.className = 'chip';
-        span.textContent = c;
-        els.chips.appendChild(span);
+      // Updated
+      els.updatedEl.textContent = fmtWhen(updated);
+
+      // Chips
+      els.chipsEl.innerHTML = "";
+      (Array.isArray(chips) ? chips : []).forEach(text => {
+        const s = document.createElement("span");
+        s.className = "chip";
+        s.textContent = String(text);
+        els.chipsEl.appendChild(s);
       });
 
-      document.documentElement.style.setProperty('--meh', state.mood_color || '#ffd23f');
+      // Sync admin inputs
+      els.answerInput.value = answer || "";
+      els.messageInput.value = message || "";
+      // Convert ISO -> datetime-local value (strip Z, ensure local)
+      const dt = new Date(updated || Date.now());
+      if (!isNaN(dt.getTime())) {
+        const pad = n => String(n).padStart(2,"0");
+        const v = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        els.updatedInput.value = v;
+      } else {
+        els.updatedInput.value = "";
+      }
+      rebuildChipsEditor(chips);
     }
 
-    // ------- Signals (optional) -------
-    async function getSignals(){
-      const cfg = await fetchJSON('/config.json');
+    function rebuildChipsEditor(chips) {
+      els.chipsEditor.innerHTML = "";
+      const arr = Array.isArray(chips) ? chips : [];
+      arr.forEach((val, idx) => {
+        const row = document.createElement("div");
+        row.className = "inline";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = String(val);
+        input.dataset.index = String(idx);
+
+        const del = document.createElement("button");
+        del.textContent = "✕";
+        del.type = "button";
+        del.addEventListener("click", () => {
+          const newChips = (state.chips || []).slice();
+          newChips.splice(idx, 1);
+          state = { ...state, chips: newChips };
+          rebuildChipsEditor(newChips);
+          render(state);
+        });
+
+        row.appendChild(input);
+        row.appendChild(del);
+        els.chipsEditor.appendChild(row);
+
+        input.addEventListener("input", () => {
+          const newChips = (state.chips || []).slice();
+          newChips[idx] = input.value;
+          state = { ...state, chips: newChips };
+        });
+      });
+    }
+
+    function collectFromAdmin() {
+      const a = els.answerInput.value.trim() || "Yes";
+      const m = els.messageInput.value.trim();
+      const uRaw = els.updatedInput.value; // datetime-local (no zone)
+      const u = uRaw ? new Date(uRaw) : new Date();
       const chips = [];
-      const metrics = {};
-      try{
-        if(cfg?.weather?.enabled && typeof cfg.weather.lat === 'number'){
-          const { lat, lon } = cfg.weather;
-          const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
-          const w = await fetchJSON(url);
-          if(w?.current){
-            const t = Math.round(w.current.temperature_2m);
-            chips.push(`Weather: ${t}°`);
-            const stab = 70 - Math.max(0, Math.abs(t-68) - 5);
-            metrics.stability = Math.max(20, Math.min(95, stab));
-          }
-        }
-      }catch(e){ /* ignore */ }
-
+      // read all inputs currently in editor
+      els.chipsEditor.querySelectorAll('input[type="text"]').forEach(inp => {
+        const v = inp.value.trim();
+        if (v) chips.push(v);
+      });
       return {
-        ok: 'meh',
-        mood_color: '#ffd23f',
-        updated_at: new Date().toISOString(),
-        metrics: {
-          stability: metrics.stability ?? 62,
-          optimism: 70,
-          chaos: 30,
-          caffeine_cups: 2
-        },
-        chips,
-        _cfg: cfg || {}
+        answer: a,
+        message: m,
+        updated: isNaN(u.getTime()) ? new Date().toISOString() : u.toISOString(),
+        chips
       };
     }
 
-    // ------- Load flow -------
-    async function load(){
-      const [manual, rawSignals] = await Promise.all([
-        fetchJSON('/status.json'),
-        getSignals(),
-      ]);
-      const base = mergeSignals(manual, rawSignals);
-      setUI(base);
-    }
+    // -------- Admin UI wiring
+    els.adminToggleBtn.addEventListener("click", () => {
+      const open = !els.adminPanel.classList.contains("open");
+      els.adminPanel.classList.toggle("open", open);
+      els.adminPanel.setAttribute("aria-hidden", String(!open));
+    });
 
-    document.getElementById('reroll').addEventListener('click', load);
+    els.addChipBtn.addEventListener("click", () => {
+      const next = (state.chips || []).concat(["New tag"]);
+      state = { ...state, chips: next };
+      rebuildChipsEditor(next);
+      render(state);
+    });
 
-    // ------- Admin panel -------
-    function initAdmin(){
-      const admin = document.getElementById('admin');
-      const ta = document.getElementById('adminText');
-      const apply = document.getElementById('applyLocal');
-      const dl = document.getElementById('downloadJson');
+    els.clearChipsBtn.addEventListener("click", () => {
+      state = { ...state, chips: [] };
+      rebuildChipsEditor([]);
+      render(state);
+    });
 
-      const show = location.hash === '#admin';
-      admin.style.display = show ? 'block' : 'none';
-      if(!show) return;
+    els.applyBtn.addEventListener("click", () => {
+      state = collectFromAdmin();
+      render(state);
+    });
 
-      ta.value = JSON.stringify(DEFAULT_STATUS, null, 2);
+    els.makeJsonBtn.addEventListener("click", () => {
+      const payload = collectFromAdmin();
+      const json = JSON.stringify(payload, null, 2);
+      els.exportBox.value = json;
+    });
 
-      apply.addEventListener('click', ()=>{
-        try{
-          const parsed = JSON.parse(ta.value);
-          const merged = mergeSignals(parsed, {});
-          setUI(merged);
-        }catch(e){ alert('Invalid JSON: ' + e.message); }
-      });
-
-      dl.addEventListener('click', ()=>{
-        const blob = new Blob([ta.value], {type:'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'status.json';
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-      });
-    }
-    window.addEventListener('hashchange', initAdmin);
-
-    // ------- Konami code fun -------
-    (function(){
-      const seq = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
-      let i = 0;
-      window.addEventListener('keydown', (e)=>{
-        if(e.key === seq[i]){
-          i++;
-          if(i === seq.length){
-            i = 0;
-            setUI({
-              ok:false,
-              message:"Konami detected. Hunter is not okay (temporarily).",
-              updated_at:new Date().toISOString(),
-              mood_color:'#ff4d6d',
-              metrics:{stability:12, optimism:24, chaos:88, caffeine_cups:5},
-              chips:["Cheat mode engaged"]
-            });
-          }
-        }else{
-          i = 0;
+    els.copyJsonBtn.addEventListener("click", async () => {
+      try {
+        if (!els.exportBox.value) {
+          // generate first if empty
+          els.makeJsonBtn.click();
         }
-      });
-    })();
+        await navigator.clipboard.writeText(els.exportBox.value);
+        els.copyJsonBtn.textContent = "Copied!";
+        setTimeout(() => { els.copyJsonBtn.textContent = "Copy to clipboard"; }, 1200);
+      } catch (e) {
+        alert("Could not copy. Select and copy manually.");
+      }
+    });
 
-    // Kick it off
-    initAdmin();
-    load();
+    // -------- Fetch /status.json (best-effort; static-host safe)
+    async function loadStatusJson() {
+      try {
+        const res = await fetch("status.json?ts=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        // Validate & coerce
+        const safe = {
+          answer: typeof data.answer === "string" ? data.answer : defaults.answer,
+          message: typeof data.message === "string" ? data.message : defaults.message,
+          updated: typeof data.updated === "string" ? data.updated : (new Date()).toISOString(),
+          chips: Array.isArray(data.chips) ? data.chips.map(String) : defaults.chips
+        };
+        state = safe;
+      } catch (_) {
+        // Fall back to defaults if not found/broken
+        state = { ...defaults };
+      } finally {
+        render(state);
+      }
+    }
+
+    // Manual refresh
+    els.refreshBtn.addEventListener("click", () => loadStatusJson());
+
+    // Initial boot
+    loadStatusJson();
+
+    // Optional: smooth live "Updated X min ago"
+    setInterval(() => {
+      els.updatedEl.textContent = fmtWhen(state.updated);
+    }, 30_000);
+  })();
   </script>
 </body>
 </html>
