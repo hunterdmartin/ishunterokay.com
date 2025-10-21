@@ -1,0 +1,12 @@
+[build]
+  # No real build; we just want Netlify to install deps for functions.
+  command = "npm run build"
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["openai"]
+
+[build.environment]
+  NODE_VERSION = "18"
