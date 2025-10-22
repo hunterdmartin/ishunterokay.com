@@ -26,7 +26,7 @@
       --ink:#e8e8ff;
       --muted:#a6a6c9;
       --accent:#7c5cff;
-      --good:#3ad29f;  /* mint */
+      --good:#3ad29f;
       --warn:#ffcf5c;
       --bad:#ff6b6b;
       --chip:#10101a;
@@ -54,7 +54,6 @@
       padding:32px;
       box-shadow:0 24px 80px rgba(0,0,0,.38);
     }
-    /* Soft aurora glow */
     .card::before{
       content:""; position:absolute; inset:-40px; z-index:-1;
       background:
@@ -66,7 +65,6 @@
     header{
       display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:10px;
     }
-    /* Make the header question big & bold */
     header h1{
       margin:0;
       font-size: clamp(28px, 3.5vw, 42px);
@@ -90,7 +88,6 @@
     .answer.warn{ color: var(--warn); }
     .answer.bad{ color: var(--bad); }
 
-    /* Animated gradient headline when OK */
     .answer.ok.gradient{
       background: linear-gradient(90deg, var(--good), var(--accent), var(--good));
       -webkit-background-clip:text; background-clip:text; color:transparent;
@@ -105,6 +102,7 @@
       color: var(--ink);
       opacity:.95;
       margin: 4px 0 16px;
+      min-height: 1.6em; /* avoid layout shift while loading */
     }
     .meta{
       display:flex; gap:12px; flex-wrap:wrap; align-items:center; color:var(--muted);
@@ -113,9 +111,7 @@
     .pulse { animation:pulse 2s ease-out 1; }
     @keyframes pulse { 0%{opacity:.4} 100%{opacity:1} }
 
-    .chips{
-      display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;
-    }
+    .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
     .chip{
       background:var(--chip);
       border:1px solid var(--chipBorder);
@@ -126,23 +122,6 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
       white-space:nowrap;
     }
-
-    /* Admin panel (hidden by default) */
-    .admin{ margin-top:18px; display:none; }
-    .admin.open{display:block;}
-    .grid{ display:grid; gap:12px; grid-template-columns: 1fr; }
-    .row{ display:grid; gap:8px; }
-    label{font-size:13px; color:var(--muted)}
-    input[type="text"], input[type="datetime-local"], textarea{
-      width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--border);
-      background:#0f0f1a; color:var(--ink); font-size:14px;
-    }
-    .inline{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-    .export{
-      width:100%; min-height:120px; font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
-    }
-    .hr{height:1px; background:var(--border); margin:16px 0}
-    .footer-note{ margin-top:10px; color:var(--muted); font-size:12px; }
   </style>
 </head>
 <body>
@@ -152,7 +131,6 @@
         <h1>Is Hunter Okay?</h1>
         <div class="actions">
           <button id="refreshBtn" title="Reload status.json">↻ Refresh</button>
-          <button id="adminToggleBtn" title="Open local editor">⚙️ Admin</button>
         </div>
       </header>
 
@@ -162,44 +140,6 @@
         <div class="meta"><span id="updated">Updated just now</span></div>
         <div id="chips" class="chips"></div>
       </div>
-
-      <div class="admin" id="adminPanel" aria-hidden="true">
-        <div class="hr"></div>
-        <div class="grid">
-          <div class="row">
-            <label for="answerInput">Answer (e.g., "Yes", "No", "Kinda")</label>
-            <input id="answerInput" type="text" placeholder="Yes" />
-          </div>
-          <div class="row">
-            <label for="messageInput">Message</label>
-            <textarea id="messageInput" rows="3" placeholder="Sipping coffee, plotting charts."></textarea>
-          </div>
-          <div class="row">
-            <label for="updatedInput">Updated (ISO or pick a time)</label>
-            <input id="updatedInput" type="datetime-local" />
-          </div>
-          <div class="row">
-            <label>Chips (tags)</label>
-            <div class="inline" id="chipsEditor"></div>
-            <div class="inline">
-              <button id="addChipBtn" type="button">+ Add tag</button>
-              <button id="clearChipsBtn" type="button">Clear tags</button>
-            </div>
-          </div>
-          <div class="row inline">
-            <button id="applyBtn" type="button">Apply locally</button>
-            <button id="makeJsonBtn" type="button">Generate status.json</button>
-            <button id="copyJsonBtn" type="button">Copy to clipboard</button>
-          </div>
-          <div class="row">
-            <label for="exportBox">status.json (save this next to index.html)</label>
-            <textarea id="exportBox" class="export" readonly></textarea>
-          </div>
-          <div class="footer-note">
-            Tip: Save the JSON above as <code>/status.json</code> in your static host. The page will auto-load it at runtime.
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -207,44 +147,22 @@
   (function () {
     "use strict";
 
+    // ---------- ELEMENTS ----------
     const els = {
-      answerEl: document.getElementById("answer"),
+      answerEl:  document.getElementById("answer"),
       messageEl: document.getElementById("message"),
       updatedEl: document.getElementById("updated"),
-      chipsEl: document.getElementById("chips"),
-      refreshBtn: document.getElementById("refreshBtn"),
-      adminToggleBtn: document.getElementById("adminToggleBtn"),
-      adminPanel: document.getElementById("adminPanel"),
-      answerInput: document.getElementById("answerInput"),
-      messageInput: document.getElementById("messageInput"),
-      updatedInput: document.getElementById("updatedInput"),
-      chipsEditor: document.getElementById("chipsEditor"),
-      addChipBtn: document.getElementById("addChipBtn"),
-      clearChipsBtn: document.getElementById("clearChipsBtn"),
-      applyBtn: document.getElementById("applyBtn"),
-      makeJsonBtn: document.getElementById("makeJsonBtn"),
-      copyJsonBtn: document.getElementById("copyJsonBtn"),
-      exportBox: document.getElementById("exportBox")
+      chipsEl:   document.getElementById("chips"),
+      refreshBtn:document.getElementById("refreshBtn")
     };
 
-    // (kept for variety if you want to use it later)
-    const QUIPS = [
-      "Touching grass 🌿",
-      "Refactoring feelings",
-      "Shipping pixels",
-      "Wrangling DAX",
-      "Hydrating and debugging",
-      "Consulting with the vibe committee"
-    ];
-
+    // ---------- HELPERS ----------
     const defaults = {
       answer: "Yes",
       message: "Checking on that now…",
       updated: new Date().toISOString(),
-      chips: ["Weather: sunny","Spotify: Synthwave Flow","Sleep: 7.2h"]
+      chips: ["Weather: —","Spotify: —","Sleep: —"]
     };
-
-    let state = { ...defaults };
 
     function clsForAnswer(a) {
       const s = String(a || "").toLowerCase();
@@ -270,6 +188,9 @@
       if (t.includes("coffee") || t.includes("caffeine")) return "☕ ";
       return "• ";
     }
+
+    // ---------- RENDER ----------
+    let state = { ...defaults };
 
     function render(data) {
       const { answer, message, updated, chips } = data;
@@ -298,82 +219,17 @@
         s.textContent = iconFor(text) + String(text);
         els.chipsEl.appendChild(s);
       });
-
-      // Sync admin inputs
-      els.answerInput.value = answer || "";
-      els.messageInput.value = message || "";
-      const dt = new Date(updated || Date.now());
-      if (!isNaN(dt.getTime())) {
-        const pad = n => String(n).padStart(2,"0");
-        els.updatedInput.value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-      } else { els.updatedInput.value = ""; }
-
-      rebuildChipsEditor(chips);
     }
 
-    function rebuildChipsEditor(chips) {
-      els.chipsEditor.innerHTML = "";
-      const arr = Array.isArray(chips) ? chips : [];
-      arr.forEach((val, idx) => {
-        const row = document.createElement("div");
-        row.className = "inline";
-        const input = document.createElement("input");
-        input.type = "text"; input.value = String(val); input.dataset.index = String(idx);
-        const del = document.createElement("button");
-        del.textContent = "✕"; del.type = "button";
-        del.addEventListener("click", () => {
-          const next = (state.chips || []).slice(); next.splice(idx,1);
-          state = { ...state, chips: next }; render(state);
-        });
-        row.appendChild(input); row.appendChild(del);
-        els.chipsEditor.appendChild(row);
-        input.addEventListener("input", () => {
-          const next = (state.chips || []).slice(); next[idx] = input.value;
-          state = { ...state, chips: next };
-        });
-      });
+    // Ensure a "Weather:" chip exists we can update later
+    function ensureWeatherChip() {
+      const hasWeather = (state.chips || []).some(c => /^weather:/i.test(c));
+      if (!hasWeather) {
+        state.chips = ["Weather: —", ...(state.chips || [])];
+      }
     }
 
-    function collectFromAdmin() {
-      const a = els.answerInput.value.trim() || "Yes";
-      const m = els.messageInput.value.trim();
-      const uRaw = els.updatedInput.value; // datetime-local
-      const u = uRaw ? new Date(uRaw) : new Date();
-      const chips = [];
-      els.chipsEditor.querySelectorAll('input[type="text"]').forEach(inp => {
-        const v = inp.value.trim(); if (v) chips.push(v);
-      });
-      return {
-        answer: a,
-        message: m || "Checking on that now…",
-        updated: isNaN(u.getTime()) ? new Date().toISOString() : u.toISOString(),
-        chips
-      };
-    }
-
-    // Admin wiring
-    els.adminToggleBtn.addEventListener("click", () => {
-      const p = els.adminPanel;
-      const open = !p.classList.contains("open");
-      p.classList.toggle("open", open);
-      p.setAttribute("aria-hidden", String(!open));
-    });
-    els.addChipBtn.addEventListener("click", () => {
-      state = { ...state, chips: (state.chips || []).concat(["New tag"]) };
-      render(state);
-    });
-    els.clearChipsBtn.addEventListener("click", () => { state = { ...state, chips: [] }; render(state); });
-    els.applyBtn.addEventListener("click", () => { state = collectFromAdmin(); render(state); });
-    els.makeJsonBtn.addEventListener("click", () => { els.exportBox.value = JSON.stringify(collectFromAdmin(), null, 2); });
-    els.copyJsonBtn.addEventListener("click", async () => {
-      try{
-        if(!els.exportBox.value) els.makeJsonBtn.click();
-        await navigator.clipboard.writeText(els.exportBox.value);
-        els.copyJsonBtn.textContent = "Copied!"; setTimeout(()=>els.copyJsonBtn.textContent="Copy to clipboard",1200);
-      }catch{ alert("Could not copy. Select and copy manually."); }
-    });
-
-    // status.json loader
+    // ---------- STATUS.JSON FALLBACK ----------
     async function loadStatusJson() {
       try {
         const res = await fetch("status.json?ts="+Date.now(), { cache:"no-store" });
@@ -389,86 +245,12 @@
       } catch {
         state = { ...defaults };
       } finally {
+        ensureWeatherChip();
         render(state);
       }
     }
 
-    // Refresh button
-    els.refreshBtn.addEventListener("click", loadStatusJson);
-
-    // Boot
-    loadStatusJson();
-
-    // Smoothly keep "Updated…" relative
-    setInterval(() => { els.updatedEl.textContent = fmtWhen(state.updated); }, 30000);
-    (async () => {
-        try {
-          const res = await fetch(
-            '/.netlify/functions/ai-vibe?weather=sunny&spotify=Synthwave&sleep=7.2h',
-            { cache: 'no-store' }
-          );
-          const data = await res.json();
-          if (data.vibe) {
-            document.getElementById('message').textContent = data.vibe;
-          }
-        } catch (err) {
-          console.debug('AI vibe fetch failed, using fallback.', err);
-        }
-      })();
-    })();
-    </script>
-
-    <!-- Secondary script that kicks off AI vibe; keep the same but use the new placeholder -->
-    <script>
-      const state = {
-        weather: (document.querySelector('[data-chip="weather"]')?.dataset.value || 'sunny'),
-        spotify: (document.querySelector('[data-chip="spotify"]')?.dataset.value || 'Synthwave'),
-        sleep:   (document.querySelector('[data-chip="sleep"]')?.dataset.value   || '7.2h')
-      };
-    
-      const els = {
-        bigAnswer: document.querySelector('#answer')    || document.querySelector('[data-answer]'),
-        line:      document.querySelector('#message')   || document.querySelector('[data-message]'),
-        updated:   document.querySelector('#updated')   || document.querySelector('[data-updated]'),
-        refresh:   document.querySelector('#refresh')   || document.querySelector('[data-refresh]')
-      };
-    
-      async function synthesizeVibe() {
-        try {
-          if (els.line) els.line.textContent = 'Checking on that now…';
-          const q = new URLSearchParams({
-            weather: state.weather,
-            spotify: state.spotify,
-            sleep: state.sleep
-          });
-          const res = await fetch(`/api/ai-vibe?${q.toString()}`);
-          const data = await res.json();
-          if (data?.ok && data?.content) {
-            if (els.line) els.line.textContent = data.content.trim();
-            if (els.updated) els.updated.textContent = 'Updated just now';
-          } else {
-            if (els.line) els.line.textContent = '—';
-          }
-        } catch (e) {
-          console.error(e);
-          if (els.line) els.line.textContent = 'Could not fetch vibe.';
-        }
-      }
-    
-      window.addEventListener('load', synthesizeVibe);
-      if (els.refresh) els.refresh.addEventListener('click', synthesizeVibe);
-    </script>
-
-    <script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    // ELEMENT HOOKS — make sure these ids exist in your HTML
-    const msgEl     = document.querySelector('#message');       // the generated sentence line
-    const updatedEl = document.querySelector('#updated');       // timestamp line
-    const weatherEl = document.querySelector('#chip-weather');  // span inside your weather chip
-  
-    if (msgEl) msgEl.textContent = 'Checking on that now…';
-  
-    // Small helper to fetch the function with a fallback path
+    // ---------- AI + WEATHER CALL ----------
     async function fetchVibe() {
       const paths = ['/api/ai-vibe', '/.netlify/functions/ai-vibe'];
       for (const p of paths) {
@@ -480,48 +262,61 @@
       }
       return null;
     }
-  
-    try {
-      // If your site drives behavior from a config.json, read it and bail early if AI is disabled.
-      let aiEnabled = true;
-      try {
-        const cfgRes = await fetch('/config.json', { cache: 'no-store' });
-        if (cfgRes.ok) {
-          const cfg = await cfgRes.json();
-          if (cfg?.ai && typeof cfg.ai.enabled === 'boolean') aiEnabled = cfg.ai.enabled;
-        }
-      } catch {}
-  
-      let data = null;
-      if (aiEnabled) data = await fetchVibe();
-  
-      const message =
-        data?.message?.toString().trim() ||
-        "I'm okay, but the AI was shy this time.";
-  
-      if (msgEl) msgEl.textContent = message;
-  
-      // Weather can be a string (your function returns a string in `weather`)
-      const w = data?.weather;
-      if (weatherEl) {
-        if (typeof w === 'string' && w.trim()) {
-          weatherEl.textContent = w;
-        } else if (w && typeof w === 'object') {
-          const desc = [w.summary, w.tempF && `${w.tempF}°F`, w.wind && `${w.wind} mph`]
-            .filter(Boolean).join(' · ');
-          weatherEl.textContent = desc || '—';
-        }
-      }
-  
-      if (updatedEl) {
-        updatedEl.textContent = `Updated ${new Date().toLocaleString()}`;
-      }
-    } catch (err) {
-      console.error('UI error:', err);
-      if (msgEl) msgEl.textContent = "Hmm…can’t reach the vibe server right now.";
-    }
-  });
-  </script>
 
-  </body>
-  </html>
+    async function updateFromAI() {
+      // show loading line while we fetch
+      els.messageEl.textContent = 'Checking on that now…';
+      try {
+        // Check config.json (optional kill-switch)
+        let aiEnabled = true;
+        try {
+          const cfgRes = await fetch('/config.json', { cache: 'no-store' });
+          if (cfgRes.ok) {
+            const cfg = await cfgRes.json();
+            if (cfg?.ai && typeof cfg.ai.enabled === 'boolean') aiEnabled = cfg.ai.enabled;
+          }
+        } catch {}
+
+        if (!aiEnabled) return;
+
+        const data = await fetchVibe();
+        const msg = data?.message?.toString().trim();
+        if (msg) {
+          state.message = msg;
+          state.updated = new Date().toISOString();
+        }
+
+        const w = data?.weather;
+        if (w) {
+          // replace or add the Weather chip
+          const rest = (state.chips || []).filter(c => !/^weather:/i.test(c));
+          state.chips = [`Weather: ${typeof w === 'string' ? w : ''}`.trim(), ...rest];
+        }
+
+        render(state);
+      } catch (err) {
+        console.error('AI fetch failed:', err);
+        // keep whatever we had from status.json; show a friendly note
+        if (!state.message || state.message === defaults.message) {
+          els.messageEl.textContent = "Hmm…can’t reach the vibe server right now.";
+        }
+      }
+    }
+
+    // ---------- EVENTS ----------
+    els.refreshBtn.addEventListener("click", async () => {
+      await loadStatusJson();
+      await updateFromAI();
+    });
+
+    // ---------- BOOT ----------
+    (async () => {
+      await loadStatusJson();   // static fallback
+      await updateFromAI();     // live AI + weather
+      // keep the "Updated…" line fresh
+      setInterval(() => { els.updatedEl.textContent = fmtWhen(state.updated); }, 30000);
+    })();
+  })();
+  </script>
+</body>
+</html>
