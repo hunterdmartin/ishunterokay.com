@@ -458,5 +458,70 @@
       window.addEventListener('load', synthesizeVibe);
       if (els.refresh) els.refresh.addEventListener('click', synthesizeVibe);
     </script>
+
+    <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    // ELEMENT HOOKS — make sure these ids exist in your HTML
+    const msgEl     = document.querySelector('#message');       // the generated sentence line
+    const updatedEl = document.querySelector('#updated');       // timestamp line
+    const weatherEl = document.querySelector('#chip-weather');  // span inside your weather chip
+  
+    if (msgEl) msgEl.textContent = 'Checking on that now…';
+  
+    // Small helper to fetch the function with a fallback path
+    async function fetchVibe() {
+      const paths = ['/api/ai-vibe', '/.netlify/functions/ai-vibe'];
+      for (const p of paths) {
+        try {
+          const res = await fetch(p, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+          if (!res.ok) continue;
+          try { return await res.json(); } catch { return { message: await res.text() }; }
+        } catch { /* try next path */ }
+      }
+      return null;
+    }
+  
+    try {
+      // If your site drives behavior from a config.json, read it and bail early if AI is disabled.
+      let aiEnabled = true;
+      try {
+        const cfgRes = await fetch('/config.json', { cache: 'no-store' });
+        if (cfgRes.ok) {
+          const cfg = await cfgRes.json();
+          if (cfg?.ai && typeof cfg.ai.enabled === 'boolean') aiEnabled = cfg.ai.enabled;
+        }
+      } catch {}
+  
+      let data = null;
+      if (aiEnabled) data = await fetchVibe();
+  
+      const message =
+        data?.message?.toString().trim() ||
+        "I'm okay, but the AI was shy this time.";
+  
+      if (msgEl) msgEl.textContent = message;
+  
+      // Weather can be a string (your function returns a string in `weather`)
+      const w = data?.weather;
+      if (weatherEl) {
+        if (typeof w === 'string' && w.trim()) {
+          weatherEl.textContent = w;
+        } else if (w && typeof w === 'object') {
+          const desc = [w.summary, w.tempF && `${w.tempF}°F`, w.wind && `${w.wind} mph`]
+            .filter(Boolean).join(' · ');
+          weatherEl.textContent = desc || '—';
+        }
+      }
+  
+      if (updatedEl) {
+        updatedEl.textContent = `Updated ${new Date().toLocaleString()}`;
+      }
+    } catch (err) {
+      console.error('UI error:', err);
+      if (msgEl) msgEl.textContent = "Hmm…can’t reach the vibe server right now.";
+    }
+  });
+  </script>
+
   </body>
   </html>
